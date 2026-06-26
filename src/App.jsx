@@ -5,11 +5,13 @@ import DayView from './components/DayView'
 import WeekView from './components/WeekView'
 import TrendsView from './components/TrendsView'
 import ExportView from './components/ExportView'
+import TrainingView from './components/TrainingView'
 import './App.css'
 
 const TABS = [
   { id: 'day', label: 'Dag', icon: '📓' },
   { id: 'week', label: 'Uge', icon: '📅' },
+  { id: 'training', label: 'Træning', icon: '🏋️' },
   { id: 'trends', label: 'Grafer', icon: '📈' },
   { id: 'export', label: 'Eksport', icon: '⬇' },
 ]
@@ -20,7 +22,6 @@ export default function App() {
   const [confirmMsg, setConfirmMsg] = useState(null)
 
   useEffect(() => {
-    // Handle email confirmation tokens in URL hash
     const hash = window.location.hash
     if (hash && hash.includes('access_token')) {
       supabase.auth.getSession().then(({ data }) => {
@@ -30,7 +31,6 @@ export default function App() {
       return
     }
 
-    // Handle ?token_hash= style confirmation links (newer Supabase)
     const params = new URLSearchParams(window.location.search)
     const tokenHash = params.get('token_hash')
     const type = params.get('type')
@@ -72,6 +72,7 @@ export default function App() {
       <main className="app-main">
         {tab === 'day' && <DayView user={session.user} />}
         {tab === 'week' && <WeekView user={session.user} />}
+        {tab === 'training' && <TrainingView user={session.user} />}
         {tab === 'trends' && <TrendsView user={session.user} />}
         {tab === 'export' && <ExportView user={session.user} />}
       </main>
