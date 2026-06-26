@@ -17,8 +17,36 @@ const TABS = [
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [tab, setTab] = useState('day')
+  const [confirmMsg, setConfirmMsg] = useState(null)
 
   useEffect(() => {
+    // Handle email confirmation tokens in URL hash
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+      supabase.auth.getSession().then(({ data }) => {
+        setSession(data.session)
+        window.location.hash = ''
+      })
+      return
+    }
+
+    // Handle ?token_hash= style confirmation links (newer Supabase)
+    const params = new URLSearchParams(window.location.search)
+    const tokenHash = params.get('token_hash')
+    const type = params.get('type')
+    if (tokenHash && type) {
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type }).then(({ data, error }) => {
+        if (error) {
+          setConfirmMsg('Bekræftelseslinket er udløbet eller ugyldigt. Prøv at oprette kontoen igen.')
+        } else {
+          setSession(data.session)
+          setConfirmMsg(null)
+        }
+        window.history.replaceState({}, '', window.location.pathname)
+      })
+      return
+    }
+
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
@@ -31,7 +59,7 @@ export default function App() {
   }
 
   if (!session) {
-    return <Auth />
+    return <Auth errorMessage={confirmMsg} />
   }
 
   return (
