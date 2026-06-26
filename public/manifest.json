@@ -1,0 +1,14 @@
+{
+  "name": "ADHD Dagbog",
+  "short_name": "ADHD",
+  "description": "Daglig ADHD-journal med symptomtracking og ugerefleksion",
+  "start_url": "/ahdh-journal/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#378ADD",
+  "lang": "da",
+  "icons": [
+    { "src": "/ahdh-journal/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/ahdh-journal/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
