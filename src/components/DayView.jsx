@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { DAYS, SYMPTOMS, HABITS, dayDateKey, formatWeekRange } from '../lib/constants'
+import SundayView from './SundayView'
 import './DayView.css'
 
 export default function DayView({ user }) {
   const [wkOff, setWkOff] = useState(0)
   const [dayIdx, setDayIdx] = useState(() => {
     const d = new Date().getDay()
-    return d === 0 ? 5 : Math.min(d - 1, 5)
+    return d === 0 ? 6 : d - 1
   })
   const [data, setData] = useState({})
   const [saving, setSaving] = useState(false)
@@ -67,34 +68,8 @@ export default function DayView({ user }) {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  if (dayIdx === 6) {
-    return (
-      <div className="day-sunday">
-        <p>Søndag er ugerefleksion</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="day-wrap">
-      <div className="week-nav">
-        <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)}>←</button>
-        <span className="week-label">{formatWeekRange(wkOff)}</span>
-        <button className="nav-arrow" onClick={() => setWkOff(w => w + 1)}>→</button>
-      </div>
-
-      <div className="day-chips">
-        {DAYS.slice(0, 6).map((name, i) => (
-          <button
-            key={i}
-            className={`day-chip ${i === dayIdx ? 'active' : ''}`}
-            onClick={() => setDayIdx(i)}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
-
+  const DayForm = () => (
+    <>
       <section className="section">
         <div className="sec-label">Symptomer (1–10)</div>
         {SYMPTOMS.map(s => {
@@ -103,11 +78,8 @@ export default function DayView({ user }) {
             <div key={s.k} className="sym-card">
               <div className="sym-row">
                 <span className="sym-name">{s.l}</span>
-                <input
-                  type="range" min="1" max="10" step="1"
-                  value={val}
-                  onChange={e => setScore(s.k, parseInt(e.target.value))}
-                />
+                <input type="range" min="1" max="10" step="1" value={val}
+                  onChange={e => setScore(s.k, parseInt(e.target.value))} />
                 <span className="sym-val">{val}</span>
               </div>
             </div>
@@ -137,29 +109,22 @@ export default function DayView({ user }) {
         ['drain', 'Hvad drænede min energi?', '…'],
         ['overstim', 'Overstimulering (støj, krav, mennesker)?', '…'],
         ['helped', 'Noget der faktisk hjalp min hjerne?', '…'],
-        ['tomorrow', 'En lille justering jeg vil prøve i morgen?', '…'],
+        ['tomorrow', dayIdx === 6 ? 'En lille justering jeg vil prøve i den kommende uge?' : 'En lille justering jeg vil prøve i morgen?', '…'],
       ].map(([id, lbl, ph]) => (
         <section key={id} className="section">
           <div className="sec-label">{lbl}</div>
-          <textarea
-            className="text-field"
-            placeholder={ph}
-            rows={2}
-            value={data[id] || ''}
-            onChange={e => setField(id, e.target.value)}
-          />
+          <textarea className="text-field" placeholder={ph} rows={2}
+            value={data[id] || ''} onChange={e => setField(id, e.target.value)} />
         </section>
       ))}
 
       <section className="section">
         <div className="sec-label">Søvn</div>
         <div className="sleep-row">
-          <input
-            type="range" min="3" max="12" step="0.5"
+          <input type="range" min="3" max="12" step="0.5"
             value={data.sleep ?? 7}
             onChange={e => setField('sleep', parseFloat(e.target.value))}
-            style={{ flex: 1 }}
-          />
+            style={{ flex: 1 }} />
           <span className="sleep-val">{parseFloat(data.sleep ?? 7).toFixed(1)}</span>
           <span className="sleep-unit">timer</span>
         </div>
@@ -171,6 +136,30 @@ export default function DayView({ user }) {
           {saving ? 'Gemmer…' : 'Gem dag'}
         </button>
       </div>
+    </>
+  )
+
+  return (
+    <div className="day-wrap">
+      <div className="week-nav">
+        <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)}>←</button>
+        <span className="week-label">{formatWeekRange(wkOff)}</span>
+        <button className="nav-arrow" onClick={() => setWkOff(w => w + 1)}>→</button>
+      </div>
+
+      <div className="day-chips">
+        {DAYS.map((name, i) => (
+          <button key={i} className={`day-chip ${i === dayIdx ? 'active' : ''}`} onClick={() => setDayIdx(i)}>
+            {name}
+          </button>
+        ))}
+      </div>
+
+      {dayIdx === 6 ? (
+        <SundayView user={user} wkOff={wkOff} DayForm={DayForm} />
+      ) : (
+        <DayForm />
+      )}
     </div>
   )
 }
