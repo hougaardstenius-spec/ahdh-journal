@@ -1,305 +1,270 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { LEVELS, QUESTS, LEVEL_ICONS, getCurrentProgram, getSetsReps } from '../lib/training'
+import { LEVELS, LEVEL_ICONS, getCurrentProgram, getSetsReps } from '../lib/training'
+import { MOBILITY_LEVELS, MOBILITY_LEVEL_TRAITS, DAILY_FOUNDATION, BONUS_CHALLENGES, getCurrentMobilityBlock, getTodayBonus } from '../lib/mobility'
 import { getMondayOfWeek } from '../lib/constants'
 import './TrainingView.css'
 
 export default function TrainingView({ user }) {
-  const [state, setState] = useState(null)
+  const [strengthState, setStrengthState] = useState(null)
+  const [mobilityState, setMobilityState] = useState(null)
   const [questData, setQuestData] = useState({})
-  const [tab, setTab] = useState('today') // today | progress | quests
-  const [completing, setCompleting] = useState(false)
-  const [justCompleted, setJustCompleted] = useState(false)
-  const [questModal, setQuestModal] = useState(null)
-  const [questInput, setQuestInput] = useState('')
+  const [section, setSection] = useState('today')
+  const [completing, setCompleting] = useState(null)
+  const [justCompleted, setJustCompleted] = useState(null)
 
   const weekStart = getMondayOfWeek(0).toISOString().slice(0, 10)
+  const today = new Date().toISOString().slice(0, 10)
 
   const load = useCallback(async () => {
-    const [{ data: ts }, { data: qd }] = await Promise.all([
+    const [{ data: ss }, { data: ms }] = await Promise.all([
       supabase.from('training_state').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('quest_progress').select('*').eq('user_id', user.id).eq('week_start', weekStart),
+      supabase.from('mobility_state').select('*').eq('user_id', user.id).maybeSingle(),
     ])
 
-    if (!ts) {
-      const initial = {
-        user_id: user.id,
-        current_level: 1,
-        current_program_idx: 0,
-        level_start_date: new Date().toISOString().slice(0, 10),
-        total_workouts: 0,
-        last_workout_date: null,
-      }
-      await supabase.from('training_state').insert(initial)
-      setState(initial)
-    } else {
-      setState(ts)
-    }
+    if (!ss) {
+      const init = { user_id: user.id, current_level: 1, current_program_idx: 0, level_start_date: today, total_workouts: 0, last_workout_date: null }
+      await supabase.from('training_state').insert(init)
+      setStrengthState(init)
+    } else setStrengthState(ss)
 
-    const qmap = {}
-    qd?.forEach(q => { qmap[q.quest_id] = q })
-    setQuestData(qmap)
-  }, [user.id, weekStart])
+    if (!ms) {
+      const init = { user_id: user.id, current_level: 1, current_block_idx: 0, block_start_date: today, total_sessions: 0, last_session_date: null }
+      await supabase.from('mobility_state').insert(init)
+      setMobilityState(init)
+    } else setMobilityState(ms)
+  }, [user.id, today])
 
   useEffect(() => { load() }, [load])
 
-  if (!state) return <div className="tr-loading">Indlæser træning…</div>
+  if (!strengthState || !mobilityState) return <div className="tr-loading">Indlæser…</div>
 
-  const trainingState = {
-    currentLevel: state.current_level,
-    currentProgramIdx: state.current_program_idx,
-  }
-  const { level, program } = getCurrentProgram(trainingState)
-  const levelIcon = LEVEL_ICONS[(state.current_level - 1) % LEVEL_ICONS.length]
+  const sState = { currentLevel: strengthState.current_level, currentProgramIdx: strengthState.current_program_idx }
+  const { level: sLevel, program } = getCurrentProgram(sState)
+  const sLevelIcon = LEVEL_ICONS[(strengthState.current_level - 1) % LEVEL_ICONS.length]
 
-  // Check if already done today
-  const today = new Date().toISOString().slice(0, 10)
-  const doneTodayAlready = state.last_workout_date === today
+  const mState = { currentLevel: mobilityState.current_level, currentBlockIdx: mobilityState.current_block_idx, totalSessions: mobilityState.total_sessions }
+  const { level: mLevel, block } = getCurrentMobilityBlock(mState)
+  const bonus = getTodayBonus(mState)
 
-  // Level progress: days since level_start_date
-  const levelStart = new Date(state.level_start_date)
+  const strengthDoneToday = strengthState.last_workout_date === today
+  const mobilityDoneToday = mobilityState.last_session_date === today
+
+  // Days since block start
+  const blockStart = new Date(mobilityState.block_start_date)
+  const daysInBlock = Math.floor((new Date() - blockStart) / 86400000)
+  const blockProgress = Math.min((daysInBlock / 14) * 100, 100)
+  const blockDaysLeft = Math.max(14 - daysInBlock, 0)
+
+  const levelStart = new Date(strengthState.level_start_date)
   const daysInLevel = Math.floor((new Date() - levelStart) / 86400000)
-  const levelProgressPct = Math.min((daysInLevel / 28) * 100, 100)
-  const daysLeft = Math.max(28 - daysInLevel, 0)
+  const levelProgress = Math.min((daysInLevel / 28) * 100, 100)
+  const levelDaysLeft = Math.max(28 - daysInLevel, 0)
 
-  async function completeWorkout() {
-    setCompleting(true)
-    const newProgramIdx = (state.current_program_idx + 1) % 4
-    let newLevel = state.current_level
-    let newLevelStart = state.level_start_date
-
-    // Check if 4 weeks passed → unlock next level
-    if (daysInLevel >= 28 && state.current_level < 10) {
-      newLevel = state.current_level + 1
-      newLevelStart = today
-    }
-
-    const updated = {
-      current_level: newLevel,
-      current_program_idx: newProgramIdx,
-      level_start_date: newLevelStart,
-      total_workouts: (state.total_workouts || 0) + 1,
-      last_workout_date: today,
-    }
-    await supabase.from('training_state').update(updated).eq('user_id', user.id)
-    setState(prev => ({ ...prev, ...updated }))
-    setCompleting(false)
-    setJustCompleted(true)
-    setTimeout(() => setJustCompleted(false), 3000)
+  async function completeStrength() {
+    setCompleting('strength')
+    const newIdx = (strengthState.current_program_idx + 1) % 4
+    let newLevel = strengthState.current_level
+    let newStart = strengthState.level_start_date
+    if (daysInLevel >= 28 && strengthState.current_level < 10) { newLevel++; newStart = today }
+    const upd = { current_level: newLevel, current_program_idx: newIdx, level_start_date: newStart, total_workouts: (strengthState.total_workouts || 0) + 1, last_workout_date: today }
+    await supabase.from('training_state').update(upd).eq('user_id', user.id)
+    setStrengthState(p => ({ ...p, ...upd }))
+    setCompleting(null); setJustCompleted('strength')
+    setTimeout(() => setJustCompleted(null), 3000)
   }
 
-  async function logQuestProgress(questId, amount) {
-    const existing = questData[questId]
-    const current = existing?.amount || 0
-    const newAmount = current + parseFloat(amount)
-    const quest = QUESTS.find(q => q.id === questId)
-
-    const payload = {
-      user_id: user.id,
-      quest_id: questId,
-      week_start: weekStart,
-      amount: newAmount,
-      target: quest.target,
-      completed: newAmount >= quest.target,
+  async function completeMobility() {
+    setCompleting('mobility')
+    const newIdx = (mobilityState.current_block_idx + 1) % 4
+    let newLevel = mobilityState.current_level
+    let newStart = mobilityState.block_start_date
+    if (daysInBlock >= 14) { 
+      if (newIdx === 0 && mobilityState.current_level < 10) { newLevel++ }
+      newStart = today 
     }
-
-    if (existing) {
-      await supabase.from('quest_progress').update(payload).eq('id', existing.id)
-    } else {
-      await supabase.from('quest_progress').insert(payload)
-    }
-    await load()
-    setQuestModal(null)
-    setQuestInput('')
+    const upd = { current_level: newLevel, current_block_idx: newIdx, block_start_date: newStart, total_sessions: (mobilityState.total_sessions || 0) + 1, last_session_date: today }
+    await supabase.from('mobility_state').update(upd).eq('user_id', user.id)
+    setMobilityState(p => ({ ...p, ...upd }))
+    setCompleting(null); setJustCompleted('mobility')
+    setTimeout(() => setJustCompleted(null), 3000)
   }
 
   return (
     <div className="tr-wrap">
       <div className="tr-tabs">
-        {[['today','I dag'],['progress','Progression'],['quests','Quests']].map(([id, lbl]) => (
-          <button key={id} className={`tr-tab ${tab===id?'active':''}`} onClick={() => setTab(id)}>{lbl}</button>
+        {[['today','I dag'],['progress','Progression']].map(([id,lbl]) => (
+          <button key={id} className={`tr-tab ${section===id?'active':''}`} onClick={() => setSection(id)}>{lbl}</button>
         ))}
       </div>
 
-      {tab === 'today' && (
+      {section === 'today' && (
         <div className="tr-today">
-          <div className="tr-level-badge">
-            <span className="tr-level-icon">{levelIcon}</span>
+
+          {/* MOBILITY */}
+          <div className="tr-block-header">
+            <span className="tr-block-icon">🌊</span>
             <div>
-              <div className="tr-level-name">Level {state.current_level} — {level.name}</div>
-              <div className="tr-level-trait">{level.trait}</div>
+              <div className="tr-block-title">Mobilitet · {mLevel.name}</div>
+              <div className="tr-block-sub">{block.name} · {block.weeks}. uge</div>
             </div>
+            <div className="tr-block-time">5–8 min</div>
           </div>
 
           <div className="tr-program-card">
-            <div className="tr-program-header">
-              <span className="tr-program-label">Program {program.id}</span>
-              {program.complex && <span className="tr-complex-badge">Komplex</span>}
-            </div>
-
-            <div className="tr-exercises">
-              {program.exercises.map((ex, i) => (
-                <div key={ex} className="tr-exercise">
-                  {program.complex && i > 0 && <div className="tr-arrow">↓</div>}
-                  <div className="tr-ex-content">
-                    <div className="tr-ex-name">{ex}</div>
-                    <div className="tr-ex-sets">{getSetsReps(state.current_level, ex)}</div>
-                  </div>
+            <div className="tr-program-label">Dagligt fundament</div>
+            {DAILY_FOUNDATION.map(ex => (
+              <div key={ex.name} className="tr-exercise">
+                <div className="tr-ex-content foundation">
+                  <div className="tr-ex-name">{ex.name}</div>
+                  <div className="tr-ex-sets">{ex.dose}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
 
-            <div className="tr-focus-note">{level.focus}</div>
+            <div className="tr-program-label" style={{marginTop:10}}>Dagens blok — {block.name}</div>
+            <div className="tr-block-goal">{block.goal}</div>
+            {block.exercises.map(ex => (
+              <div key={ex.name} className="tr-exercise">
+                <div className="tr-ex-content">
+                  <div className="tr-ex-name">{ex.name}</div>
+                  <div className="tr-ex-sets">{ex.dose}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {justCompleted ? (
+          {justCompleted === 'mobility' ? (
             <div className="tr-completed-msg">
-              <span className="tr-completed-icon">🎯</span>
-              <div>
-                <div className="tr-completed-title">Godt klaret!</div>
-                <div className="tr-completed-sub">Næste: Program {LEVELS[state.current_level-1]?.programs[state.current_program_idx]?.id}</div>
-              </div>
+              <span className="tr-completed-icon">🌊</span>
+              <div><div className="tr-completed-title">Mobilitet gennemført!</div></div>
             </div>
-          ) : doneTodayAlready ? (
-            <div className="tr-done-today">
-              <span>✓</span> Trænet i dag — kom igen i morgen
-            </div>
+          ) : mobilityDoneToday ? (
+            <div className="tr-done-today">✓ Mobilitet lavet i dag</div>
           ) : (
-            <button className="tr-complete-btn" onClick={completeWorkout} disabled={completing}>
-              {completing ? 'Gemmer…' : '✓ Markér som gennemført'}
+            <button className="tr-complete-btn mobility" onClick={completeMobility} disabled={completing==='mobility'}>
+              {completing==='mobility' ? 'Gemmer…' : '✓ Mobilitet gennemført'}
             </button>
           )}
 
-          <div className="tr-level-progress">
-            <div className="tr-level-progress-row">
-              <span className="tr-lp-label">Level fremgang</span>
-              <span className="tr-lp-days">{daysLeft > 0 ? `${daysLeft} dage til næste level` : '🔓 Nyt level klar!'}</span>
+          <div className="tr-progress-wrap">
+            <div className="tr-progress-meta">
+              <span>{block.name}</span>
+              <span className="tr-progress-days">{blockDaysLeft > 0 ? `${blockDaysLeft} dage til ny blok` : '🔓 Ny blok klar!'}</span>
             </div>
-            <div className="tr-progress-bar">
-              <div className="tr-progress-fill" style={{ width: `${levelProgressPct}%` }} />
-            </div>
+            <div className="tr-progress-bar"><div className="tr-progress-fill mobility" style={{width:`${blockProgress}%`}} /></div>
           </div>
 
-          <div className="tr-stats-row">
-            <div className="tr-stat">
-              <div className="tr-stat-val">{state.total_workouts || 0}</div>
-              <div className="tr-stat-lbl">Træninger i alt</div>
-            </div>
-            <div className="tr-stat">
-              <div className="tr-stat-val">{state.current_level}</div>
-              <div className="tr-stat-lbl">Nuværende level</div>
-            </div>
-            <div className="tr-stat">
-              <div className="tr-stat-val">{['A','B','C','D'][state.current_program_idx]}</div>
-              <div className="tr-stat-lbl">Næste program</div>
-            </div>
-          </div>
-        </div>
-      )}
+          {/* DIVIDER */}
+          <div className="tr-section-divider"><span>Styrketræning</span></div>
 
-      {tab === 'progress' && (
-        <div className="tr-progress-view">
-          <div className="tr-section-label">Din rejse</div>
-          <div className="tr-levels-list">
-            {LEVELS.map((lv, i) => {
-              const isUnlocked = state.current_level > lv.level
-              const isCurrent = state.current_level === lv.level
-              const icon = LEVEL_ICONS[i]
-              return (
-                <div key={lv.level} className={`tr-level-row ${isCurrent ? 'current' : ''} ${isUnlocked ? 'done' : ''}`}>
-                  <div className="tr-level-row-icon">{icon}</div>
-                  <div className="tr-level-row-info">
-                    <div className="tr-level-row-name">Level {lv.level} — {lv.name}</div>
-                    <div className="tr-level-row-trait">{lv.trait}</div>
-                  </div>
-                  <div className="tr-level-row-status">
-                    {isUnlocked ? '✓' : isCurrent ? '▶' : '🔒'}
-                  </div>
-                </div>
-              )
-            })}
+          {/* STRENGTH */}
+          <div className="tr-block-header">
+            <span className="tr-block-icon">{sLevelIcon}</span>
+            <div>
+              <div className="tr-block-title">Styrke · {sLevel.name}</div>
+              <div className="tr-block-sub">{sLevel.trait}</div>
+            </div>
+            <div className="tr-block-time">10–20 min</div>
           </div>
 
-          <div className="tr-section-label" style={{marginTop:'1.5rem'}}>Nuværende level — programmer</div>
-          <div className="tr-mini-programs">
-            {level.programs.map((prog, i) => {
-              const isCurrent = i === state.current_program_idx
-              const isDone = i < state.current_program_idx
-              return (
-                <div key={prog.id} className={`tr-mini-prog ${isCurrent ? 'current' : ''} ${isDone ? 'done' : ''}`}>
-                  <div className="tr-mini-prog-id">{prog.id}</div>
-                  <div className="tr-mini-prog-exercises">
-                    {prog.exercises.join(' · ')}
-                  </div>
-                  {isCurrent && <div className="tr-mini-now">Nu</div>}
-                  {isDone && <div className="tr-mini-done">✓</div>}
+          <div className="tr-program-card">
+            <div className="tr-program-label">Program {program.id}{program.complex ? ' — Komplex' : ''}</div>
+            <div className="tr-block-goal">{sLevel.focus}</div>
+            {program.exercises.map((ex, i) => (
+              <div key={ex} className="tr-exercise">
+                {program.complex && i > 0 && <div className="tr-arrow">↓</div>}
+                <div className="tr-ex-content">
+                  <div className="tr-ex-name">{ex}</div>
+                  <div className="tr-ex-sets">{getSetsReps(strengthState.current_level, ex)}</div>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {tab === 'quests' && (
-        <div className="tr-quests-view">
-          <div className="tr-section-label">Ugens quests</div>
-          <p className="tr-quest-intro">Frivillige udfordringer — logger du ekstra, får du ekstra.</p>
-          {QUESTS.map(q => {
-            const qd = questData[q.id]
-            const amount = qd?.amount || 0
-            const pct = Math.min((amount / q.target) * 100, 100)
-            const done = qd?.completed
-            return (
-              <div key={q.id} className={`tr-quest-card ${done ? 'done' : ''}`}>
-                <div className="tr-quest-header">
-                  <span className="tr-quest-icon">{q.icon}</span>
-                  <div className="tr-quest-info">
-                    <div className="tr-quest-name">{q.name}</div>
-                    <div className="tr-quest-desc">{q.description}</div>
-                  </div>
-                  {done && <span className="tr-quest-badge">✓</span>}
-                </div>
-                <div className="tr-quest-progress-row">
-                  <div className="tr-progress-bar">
-                    <div className="tr-progress-fill quest" style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="tr-quest-count">{amount}/{q.target} {q.unit}</span>
-                </div>
-                {!done && (
-                  <button className="tr-quest-log-btn" onClick={() => { setQuestModal(q); setQuestInput('') }}>
-                    + Log fremgang
-                  </button>
-                )}
               </div>
-            )
-          })}
+            ))}
+          </div>
+
+          {justCompleted === 'strength' ? (
+            <div className="tr-completed-msg">
+              <span className="tr-completed-icon">💪</span>
+              <div><div className="tr-completed-title">Styrketræning gennemført!</div></div>
+            </div>
+          ) : strengthDoneToday ? (
+            <div className="tr-done-today">✓ Styrketræning lavet i dag</div>
+          ) : (
+            <button className="tr-complete-btn" onClick={completeStrength} disabled={completing==='strength'}>
+              {completing==='strength' ? 'Gemmer…' : '✓ Styrketræning gennemført'}
+            </button>
+          )}
+
+          <div className="tr-progress-wrap">
+            <div className="tr-progress-meta">
+              <span>Level {strengthState.current_level}</span>
+              <span className="tr-progress-days">{levelDaysLeft > 0 ? `${levelDaysLeft} dage til næste level` : '🔓 Nyt level klar!'}</span>
+            </div>
+            <div className="tr-progress-bar"><div className="tr-progress-fill" style={{width:`${levelProgress}%`}} /></div>
+          </div>
+
+          {/* DIVIDER */}
+          <div className="tr-section-divider"><span>Bonus</span></div>
+
+          {/* BONUS */}
+          <div className="tr-bonus-card">
+            <div className="tr-bonus-header">
+              <span className="tr-bonus-icon">{bonus.icon}</span>
+              <div>
+                <div className="tr-bonus-name">{bonus.name}</div>
+                <div className="tr-bonus-desc">{bonus.desc}</div>
+              </div>
+              <span className="tr-bonus-time">1–2 min</span>
+            </div>
+            <div className="tr-bonus-note">Valgfri — men du ved hvad den gør for dig 😉</div>
+          </div>
+
+          {/* STATS */}
+          <div className="tr-stats-row">
+            <div className="tr-stat"><div className="tr-stat-val">{mobilityState.total_sessions||0}</div><div className="tr-stat-lbl">Mob. sessioner</div></div>
+            <div className="tr-stat"><div className="tr-stat-val">{strengthState.total_workouts||0}</div><div className="tr-stat-lbl">Styrke sessioner</div></div>
+            <div className="tr-stat"><div className="tr-stat-val">{strengthState.current_level}</div><div className="tr-stat-lbl">Styrke level</div></div>
+          </div>
         </div>
       )}
 
-      {questModal && (
-        <div className="tr-modal-overlay" onClick={() => setQuestModal(null)}>
-          <div className="tr-modal" onClick={e => e.stopPropagation()}>
-            <div className="tr-modal-title">{questModal.icon} {questModal.name}</div>
-            <div className="tr-modal-desc">{questModal.description}</div>
-            <input
-              className="tr-modal-input"
-              type="number"
-              min="1"
-              placeholder={`Antal ${questModal.unit}…`}
-              value={questInput}
-              onChange={e => setQuestInput(e.target.value)}
-              autoFocus
-            />
-            <div className="tr-modal-btns">
-              <button className="tr-modal-cancel" onClick={() => setQuestModal(null)}>Annuller</button>
-              <button
-                className="tr-modal-confirm"
-                onClick={() => questInput && logQuestProgress(questModal.id, questInput)}
-                disabled={!questInput}
-              >
-                Gem
-              </button>
-            </div>
+      {section === 'progress' && (
+        <div className="tr-progress-view">
+          <div className="tr-prog-section">
+            <div className="tr-prog-label">🌊 Mobilitet — levels</div>
+            {MOBILITY_LEVEL_TRAITS.map((trait, i) => {
+              const lv = i + 1
+              const isCurrent = mobilityState.current_level === lv
+              const isDone = mobilityState.current_level > lv
+              return (
+                <div key={lv} className={`tr-level-row ${isCurrent?'current':''} ${isDone?'done':''}`}>
+                  <div className="tr-level-row-num">{lv}</div>
+                  <div className="tr-level-row-info">
+                    <div className="tr-level-row-name">{trait}</div>
+                    {isCurrent && block && <div className="tr-level-row-sub">Nu: {block.name}</div>}
+                  </div>
+                  <div className="tr-level-row-status">{isDone?'✓':isCurrent?'▶':'🔒'}</div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="tr-prog-section">
+            <div className="tr-prog-label">💪 Styrke — levels</div>
+            {LEVELS.map((lv, i) => {
+              const isCurrent = strengthState.current_level === lv.level
+              const isDone = strengthState.current_level > lv.level
+              return (
+                <div key={lv.level} className={`tr-level-row ${isCurrent?'current':''} ${isDone?'done':''}`}>
+                  <div className="tr-level-row-num">{LEVEL_ICONS[i]}</div>
+                  <div className="tr-level-row-info">
+                    <div className="tr-level-row-name">{lv.name}</div>
+                    <div className="tr-level-row-sub">{lv.trait}</div>
+                  </div>
+                  <div className="tr-level-row-status">{isDone?'✓':isCurrent?'▶':'🔒'}</div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
