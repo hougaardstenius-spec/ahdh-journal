@@ -10,7 +10,7 @@ export const SYMPTOMS = [
 ]
 
 export const HABITS = [
-  { k: 'run', l: 'Løbe en tur' },
+  { k: 'run', l: 'Cardio' },
   { k: 'strength', l: 'Styrketræne' },
   { k: 'yoga', l: 'Mobilitet' },
   { k: 'fasting', l: '16/8 faste' },
