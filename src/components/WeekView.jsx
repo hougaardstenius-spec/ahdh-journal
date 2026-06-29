@@ -58,7 +58,7 @@ export default function WeekView({ user }) {
   }
 
   function avg(symptomKey) {
-    const vals = ddata.slice(0, 6).map(d => d?.scores?.[symptomKey]).filter(v => v != null)
+    const vals = ddata.map(d => d?.scores?.[symptomKey]).filter(v => v != null)
     return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '–'
   }
 
@@ -79,7 +79,7 @@ export default function WeekView({ user }) {
               <span className="wk-mavg">{avg(s.k)}</span>
             </div>
             <div className="dots-row">
-              {DAYS.slice(0, 6).map((d, i) => {
+              {DAYS.map((d, i) => {
                 const val = ddata[i]?.scores?.[s.k]
                 return (
                   <div key={i} className={`ddot ${val ? 'on' : ''}`}>
@@ -97,10 +97,10 @@ export default function WeekView({ user }) {
         <div className="sec-label">Gode vaner – ugetotal</div>
         <div className="hab-summary">
           {HABITS.map(h => {
-            const count = ddata.slice(0, 6).filter(d => d?.habits?.[h.k]).length
+            const count = ddata.filter(d => d?.habits?.[h.k]).length
             return (
               <div key={h.k} className="hs-item">
-                <div className="hs-count">{count}/6</div>
+                <div className="hs-count">{count}/7</div>
                 <div className="hs-name">{h.l}</div>
               </div>
             )
