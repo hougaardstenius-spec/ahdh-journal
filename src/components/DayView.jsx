@@ -1,11 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { DAYS, SYMPTOMS, HABITS, dayDateKey, formatWeekRange } from '../lib/constants'
 import SundayView from './SundayView'
 import './DayView.css'
 
-// Standalone component to avoid re-mount on every render
 function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSave }) {
+  const textRefs = useRef({})
+
+  function handleSlider(symptomKey, val) {
+    // Remember scroll position, update, restore
+    const scrollY = window.scrollY
+    onScore(symptomKey, val)
+    requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'instant' }))
+  }
+
   return (
     <>
       <section className="section">
@@ -16,8 +24,10 @@ function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSav
             <div key={s.k} className="sym-card">
               <div className="sym-row">
                 <span className="sym-name">{s.l}</span>
-                <input type="range" min="1" max="10" step="1" value={val}
-                  onChange={e => onScore(s.k, parseInt(e.target.value))} />
+                <input
+                  type="range" min="1" max="10" step="1" value={val}
+                  onChange={e => handleSlider(s.k, parseInt(e.target.value))}
+                />
                 <span className="sym-val">{val}</span>
               </div>
             </div>
@@ -52,6 +62,7 @@ function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSav
         <section key={id} className="section">
           <div className="sec-label">{lbl}</div>
           <textarea
+            ref={el => textRefs.current[id] = el}
             className="text-field"
             placeholder={ph}
             rows={2}
@@ -64,10 +75,16 @@ function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSav
       <section className="section">
         <div className="sec-label">Søvn</div>
         <div className="sleep-row">
-          <input type="range" min="3" max="12" step="0.5"
+          <input
+            type="range" min="3" max="12" step="0.5"
             value={data.sleep ?? 7}
-            onChange={e => onField('sleep', parseFloat(e.target.value))}
-            style={{ flex: 1 }} />
+            onChange={e => {
+              const scrollY = window.scrollY
+              onField('sleep', parseFloat(e.target.value))
+              requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'instant' }))
+            }}
+            style={{ flex: 1 }}
+          />
           <span className="sleep-val">{parseFloat(data.sleep ?? 7).toFixed(1)}</span>
           <span className="sleep-unit">timer</span>
         </div>
