@@ -15,7 +15,11 @@ function SundayDayForm({ data, saving, saved, onScore, onHabit, onField, onSave 
               <div className="sym-row">
                 <span className="sym-name">{s.l}</span>
                 <input type="range" min="1" max="10" step="1" value={val}
-                  onChange={e => onScore(s.k, parseInt(e.target.value))} />
+                  onChange={e => {
+                    const sy = window.scrollY
+                    onScore(s.k, parseInt(e.target.value))
+                    requestAnimationFrame(() => window.scrollTo({ top: sy, behavior: 'instant' }))
+                  }} />
                 <span className="sym-val">{val}</span>
               </div>
             </div>
@@ -64,7 +68,11 @@ function SundayDayForm({ data, saving, saved, onScore, onHabit, onField, onSave 
         <div className="sleep-row">
           <input type="range" min="3" max="12" step="0.5"
             value={data.sleep ?? 7}
-            onChange={e => onField('sleep', parseFloat(e.target.value))}
+            onChange={e => {
+              const sy = window.scrollY
+              onField('sleep', parseFloat(e.target.value))
+              requestAnimationFrame(() => window.scrollTo({ top: sy, behavior: 'instant' }))
+            }}
             style={{ flex: 1 }} />
           <span className="sleep-val">{parseFloat(data.sleep ?? 7).toFixed(1)}</span>
           <span className="sleep-unit">timer</span>
