@@ -50,24 +50,35 @@ export default function TrainingView({ user }) {
   const strengthDoneToday = strengthState.last_workout_date === today
   const mobilityDoneToday = mobilityState.last_session_date === today
 
-  // Days since block start
-  const blockStart = new Date(mobilityState.block_start_date)
-  const daysInBlock = Math.floor((new Date() - blockStart) / 86400000)
-  const blockProgress = Math.min((daysInBlock / 14) * 100, 100)
-  const blockDaysLeft = Math.max(14 - daysInBlock, 0)
+  // Session-count based progression
+  const MOBILITY_BLOCK_TARGET = 14
+  const STRENGTH_LEVEL_TARGET = 21
 
-  const levelStart = new Date(strengthState.level_start_date)
-  const daysInLevel = Math.floor((new Date() - levelStart) / 86400000)
-  const levelProgress = Math.min((daysInLevel / 28) * 100, 100)
-  const levelDaysLeft = Math.max(28 - daysInLevel, 0)
+  const blockSessions = mobilityState.block_sessions || 0
+  const blockProgress = Math.min((blockSessions / MOBILITY_BLOCK_TARGET) * 100, 100)
+  const blockLeft = Math.max(MOBILITY_BLOCK_TARGET - blockSessions, 0)
+
+  const levelWorkouts = strengthState.level_workouts || 0
+  const levelProgress = Math.min((levelWorkouts / STRENGTH_LEVEL_TARGET) * 100, 100)
+  const levelLeft = Math.max(STRENGTH_LEVEL_TARGET - levelWorkouts, 0)
 
   async function completeStrength() {
     setCompleting('strength')
+    const newLevelWorkouts = (strengthState.level_workouts || 0) + 1
     const newIdx = (strengthState.current_program_idx + 1) % 4
     let newLevel = strengthState.current_level
-    let newStart = strengthState.level_start_date
-    if (daysInLevel >= 28 && strengthState.current_level < 10) { newLevel++; newStart = today }
-    const upd = { current_level: newLevel, current_program_idx: newIdx, level_start_date: newStart, total_workouts: (strengthState.total_workouts || 0) + 1, last_workout_date: today }
+    let newLevelWorkoutsReset = newLevelWorkouts
+    if (newLevelWorkouts >= STRENGTH_LEVEL_TARGET && strengthState.current_level < 10) {
+      newLevel++
+      newLevelWorkoutsReset = 0
+    }
+    const upd = {
+      current_level: newLevel,
+      current_program_idx: newIdx,
+      level_workouts: newLevelWorkoutsReset,
+      total_workouts: (strengthState.total_workouts || 0) + 1,
+      last_workout_date: today
+    }
     await supabase.from('training_state').update(upd).eq('user_id', user.id)
     setStrengthState(p => ({ ...p, ...upd }))
     setCompleting(null); setJustCompleted('strength')
@@ -76,14 +87,22 @@ export default function TrainingView({ user }) {
 
   async function completeMobility() {
     setCompleting('mobility')
-    const newIdx = (mobilityState.current_block_idx + 1) % 4
+    const newBlockSessions = (mobilityState.block_sessions || 0) + 1
+    let newIdx = mobilityState.current_block_idx
     let newLevel = mobilityState.current_level
-    let newStart = mobilityState.block_start_date
-    if (daysInBlock >= 14) { 
+    let newBlockSessionsReset = newBlockSessions
+    if (newBlockSessions >= MOBILITY_BLOCK_TARGET) {
+      newIdx = (mobilityState.current_block_idx + 1) % 4
+      newBlockSessionsReset = 0
       if (newIdx === 0 && mobilityState.current_level < 10) { newLevel++ }
-      newStart = today 
     }
-    const upd = { current_level: newLevel, current_block_idx: newIdx, block_start_date: newStart, total_sessions: (mobilityState.total_sessions || 0) + 1, last_session_date: today }
+    const upd = {
+      current_level: newLevel,
+      current_block_idx: newIdx,
+      block_sessions: newBlockSessionsReset,
+      total_sessions: (mobilityState.total_sessions || 0) + 1,
+      last_session_date: today
+    }
     await supabase.from('mobility_state').update(upd).eq('user_id', user.id)
     setMobilityState(p => ({ ...p, ...upd }))
     setCompleting(null); setJustCompleted('mobility')
@@ -150,7 +169,7 @@ export default function TrainingView({ user }) {
           <div className="tr-progress-wrap">
             <div className="tr-progress-meta">
               <span>{block.name}</span>
-              <span className="tr-progress-days">{blockDaysLeft > 0 ? `${blockDaysLeft} dage til ny blok` : '🔓 Ny blok klar!'}</span>
+              <span className="tr-progress-days">{blockLeft > 0 ? `${blockLeft} sessioner til ny blok` : '🔓 Ny blok klar!'}</span>
             </div>
             <div className="tr-progress-bar"><div className="tr-progress-fill mobility" style={{width:`${blockProgress}%`}} /></div>
           </div>
@@ -198,7 +217,7 @@ export default function TrainingView({ user }) {
           <div className="tr-progress-wrap">
             <div className="tr-progress-meta">
               <span>Level {strengthState.current_level}</span>
-              <span className="tr-progress-days">{levelDaysLeft > 0 ? `${levelDaysLeft} dage til næste level` : '🔓 Nyt level klar!'}</span>
+              <span className="tr-progress-days">{levelLeft > 0 ? `${levelLeft} sessioner til næste level` : '🔓 Nyt level klar!'}</span>
             </div>
             <div className="tr-progress-bar"><div className="tr-progress-fill" style={{width:`${levelProgress}%`}} /></div>
           </div>
