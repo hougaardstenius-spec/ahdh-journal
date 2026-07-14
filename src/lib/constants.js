@@ -1,12 +1,30 @@
 export const DAYS = ['Man', 'Tirs', 'Ons', 'Tors', 'Fre', 'Lør', 'Søn']
 
 export const SYMPTOMS = [
-  { k: 'motivation', l: 'Motivation / Dopamin' },
-  { k: 'overstim', l: 'Overstimulering' },
-  { k: 'mental_noise', l: 'Mental støj' },
-  { k: 'focus', l: 'Fokus' },
-  { k: 'energy', l: 'Energi' },
-  { k: 'social_energy', l: 'Social energi' },
+  {
+    k: 'motivation', l: 'Motivation / Dopamin',
+    desc: 'Hvor meget lyst og drive har du i dag? Lav score = svært at komme i gang, alt føles tungt. Høj score = du har energi til at tage fat og gennemføre ting.',
+  },
+  {
+    k: 'overstim', l: 'Overstimulering',
+    desc: 'Hvor meget bliver du påvirket af sanseindtryk og krav udefra? Lav score = du håndterer det fint. Høj score = støj, mennesker eller skærmtid føles overvældende.',
+  },
+  {
+    k: 'mental_noise', l: 'Mental støj',
+    desc: 'Hvor mange tanker kører rundt i hovedet på dig? Lav score = rolig og fokuseret. Høj score = mange tanker på én gang, svært at lande.',
+  },
+  {
+    k: 'focus', l: 'Fokus',
+    desc: 'Hvor let er det at koncentrere sig og blive på en opgave? Lav score = tanker vandrer, svært at sætte i gang. Høj score = du kan holde fokus og arbejde i flow.',
+  },
+  {
+    k: 'energy', l: 'Energi',
+    desc: 'Din fysiske og mentale kapacitet i dag. Lav score = du er træt og tom. Høj score = du føler dig udhvilet og klar til at tage fat.',
+  },
+  {
+    k: 'social_energy', l: 'Social energi',
+    desc: 'Hvor meget overskud har du til andre mennesker? Lav score = du har brug for at være alene og lade op. Høj score = du nyder kontakt og har energi til sociale situationer.',
+  },
 ]
 
 export const HABITS = [
