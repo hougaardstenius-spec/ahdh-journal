@@ -1,0 +1,64 @@
+.streak-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #f0f7ff;
+  border: 0.5px solid #bfdbfe;
+  flex-wrap: wrap;
+  transition: all 0.3s;
+}
+
+.streak-banner.safe {
+  background: #eafaf1;
+  border-color: #a9dfbf;
+  animation: streak-safe 0.5s ease;
+}
+
+.streak-banner.danger {
+  background: #fff8f0;
+  border-color: #fcd34d;
+  animation: streak-pulse 2s ease infinite;
+}
+
+@keyframes streak-safe {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes streak-pulse {
+  0%, 100% { border-color: #fcd34d; }
+  50%       { border-color: #f59e0b; }
+}
+
+.streak-emoji { font-size: 20px; flex-shrink: 0; }
+
+.streak-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  flex: 1;
+}
+
+.streak-dots {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.streak-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ddd;
+}
+
+.streak-dot.on {
+  background: #f59e0b;
+}
+
+.streak-banner.safe .streak-dot.on {
+  background: #27ae60;
+}

@@ -1,0 +1,111 @@
+.spin-wrap {
+  background: #f7f8fa;
+  border-radius: 14px;
+  padding: 14px;
+  border: 0.5px solid #e8e8e8;
+}
+
+.spin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.spin-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+}
+
+.spin-hint {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.spin-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #378ADD, #9b59b6);
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  transition: transform 0.15s, opacity 0.15s;
+  font-family: inherit;
+}
+
+.spin-btn:hover:not(:disabled) { transform: scale(1.02); }
+.spin-btn:active:not(:disabled) { transform: scale(0.98); }
+.spin-btn:disabled { opacity: 0.8; }
+
+.spin-btn-icon { font-size: 24px; }
+.spin-btn-label { font-size: 15px; font-weight: 600; color: white; }
+
+.spin-btn.spinning {
+  animation: spin-pulse 0.3s ease infinite alternate;
+}
+@keyframes spin-pulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.02); }
+}
+
+.spin-icons {
+  display: flex;
+  gap: 6px;
+}
+.spin-icon-item {
+  font-size: 22px;
+  animation: spin-bounce 0.4s ease infinite alternate;
+}
+@keyframes spin-bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-6px); }
+}
+
+/* Result */
+.spin-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+  animation: spin-reveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes spin-reveal {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.rarity-common    { background: #f0f7ff; border: 0.5px solid #bfdbfe; }
+.rarity-uncommon  { background: #f0fdf4; border: 0.5px solid #86efac; }
+.rarity-rare      { background: #fdf4ff; border: 0.5px solid #d8b4fe; }
+.rarity-legendary { background: #fefce8; border: 0.5px solid #fde047; }
+
+.spin-result-icon { font-size: 32px; flex-shrink: 0; }
+.spin-result-info { flex: 1; min-width: 0; }
+.spin-result-label { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 4px; }
+.spin-result-desc { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 6px; }
+.spin-message { font-style: italic; color: #378ADD; }
+.spin-result-xp {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #27ae60;
+  background: #eafaf1;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.spin-done-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 10px;
+  color: #aaa;
+}
