@@ -40,7 +40,7 @@ function getGreeting(name) {
 
 function QuickLog({ data, onSave, saving, loggedToday }) {
   const habitCount = Object.values(data.habits || {}).filter(Boolean).length
-  const scoreCount = Object.values(data.scores || {}).filter(v => v !== undefined).length
+  const scoreCount = Object.keys(data.scores || {}).length
   const allDone = habitCount === HABITS.length
 
   return (
@@ -61,7 +61,7 @@ function QuickLog({ data, onSave, saving, loggedToday }) {
   )
 }
 
-function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSave, isToday, loggedToday }) {
+function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSave, isToday }) {
   const textRefs = useRef({})
   const [openInfo, setOpenInfo] = useState(null)
   const [expanded, setExpanded] = useState(!isToday)
@@ -76,7 +76,7 @@ function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSav
     <div className="day-form-wrap">
       {isToday && (
         <button className="day-form-toggle" onClick={() => setExpanded(e => !e)}>
-          <span>{expanded ? 'Skjul detaljeret log ↑' : 'Udfyld detaljeret log ↓'}</span>
+          {expanded ? 'Skjul detaljeret log ↑' : 'Udfyld detaljeret log ↓'}
         </button>
       )}
 
@@ -201,7 +201,7 @@ export default function DayView({ user, gamification, onAwardXP, onSpin, spunTod
       tomorrow: data.tomorrow || null,
     }
     await supabase.from('daily_entries').upsert(payload, { onConflict: 'user_id,entry_date' })
-    if (isToday && !loggedToday) {
+    if (isToday && onAwardXP && !loggedToday) {
       const habitCount = Object.values(data.habits || {}).filter(Boolean).length
       const allHabits = habitCount === HABITS.length
       const xp = XP_REWARDS.log_day + (habitCount * XP_REWARDS.habit_each) + (allHabits ? XP_REWARDS.all_habits_bonus : 0)
@@ -211,8 +211,11 @@ export default function DayView({ user, gamification, onAwardXP, onSpin, spunTod
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const streak = gamification?.current_streak || 0
-  const showHero = isToday && wkOff === 0
+  // Show hero whenever we're on the current week — regardless of gamification load state
+  const showHero = wkOff === 0 && dayIdx !== 6
+
+  const streak = gamification?.current_streak ?? 0
+  const totalXP = gamification?.total_xp ?? 0
 
   return (
     <div className="day-wrap">
@@ -224,7 +227,9 @@ export default function DayView({ user, gamification, onAwardXP, onSpin, spunTod
               <div className="day-hero-greeting">{getGreeting(profile?.display_name)}</div>
               <div className="day-hero-sub">{EVENING_GREETINGS[new Date().getDate() % EVENING_GREETINGS.length]}</div>
             </div>
-            {profile?.avatar && <div className="day-hero-avatar">{profile.avatar}</div>}
+            {profile?.avatar && (
+              <div className="day-hero-avatar">{profile.avatar}</div>
+            )}
           </div>
 
           {streak > 0 && (
@@ -237,11 +242,23 @@ export default function DayView({ user, gamification, onAwardXP, onSpin, spunTod
             </div>
           )}
 
-          <XPBar totalXP={gamification?.total_xp || 0} />
+          {streak === 0 && (
+            <div className="day-hero-streak">
+              <span className="day-hero-streak-fire">🌱</span>
+              <div>
+                <div className="day-hero-streak-num">Ingen streak endnu</div>
+                <div className="day-hero-streak-msg">Log dagens dag for at starte din streak</div>
+              </div>
+            </div>
+          )}
+
+          <XPBar totalXP={totalXP} />
         </div>
       )}
 
-      {showHero && <DailySpin today={today} spunToday={spunToday} onSpin={onSpin} />}
+      {showHero && onSpin && (
+        <DailySpin today={today} spunToday={spunToday ?? false} onSpin={onSpin} />
+      )}
 
       <div className="week-nav">
         <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)}>←</button>
@@ -262,12 +279,12 @@ export default function DayView({ user, gamification, onAwardXP, onSpin, spunTod
       ) : (
         <>
           {isToday && (
-            <QuickLog data={data} onSave={save} saving={saving} loggedToday={loggedToday} />
+            <QuickLog data={data} onSave={save} saving={saving} loggedToday={loggedToday ?? false} />
           )}
           <DayForm
             data={data} dayIdx={dayIdx} saving={saving} saved={saved}
             onScore={setScore} onHabit={toggleHabit} onField={setField} onSave={save}
-            isToday={isToday} loggedToday={loggedToday}
+            isToday={isToday}
           />
         </>
       )}
