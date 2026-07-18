@@ -10,8 +10,10 @@ export const STAGE_THRESHOLDS = [0, 5, 15, 35]
 
 export const DEFAULT_ENERGY = 50
 export const DEFAULT_HAPPINESS = 70
-export const ENERGY_GAIN_PER_EVENT = 15
-export const HAPPINESS_GAIN_PER_EVENT = 5
+export const ENERGY_GAIN_RATIO = 0.5     // energi pr. optjent XP
+export const ENERGY_GAIN_CAP = 40        // maks. energi fra én handling (log/spin)
+export const HAPPINESS_GAIN_RATIO = 0.15
+export const HAPPINESS_GAIN_CAP = 15
 export const ACTIVITY_ENERGY_COST = 30
 export const ACTIVITY_HAPPINESS_GAIN = 15
 export const ACTIVITY_XP_MIN = 10
@@ -90,10 +92,14 @@ export function getPetEmoji(speciesId, stageIdx) {
   return species.stages[Math.min(stageIdx, species.stages.length - 1)]
 }
 
-export function applyEngagementGain(pet) {
+// Energi/lykke skalerer med den optjente XP, så flere gennemførte vaner
+// (mere XP pr. log) giver kæledyret mere — ikke bare en fast bonus.
+export function applyEngagementGain(pet, xpAmount) {
+  const energyGain = Math.min(ENERGY_GAIN_CAP, Math.round(xpAmount * ENERGY_GAIN_RATIO))
+  const happinessGain = Math.min(HAPPINESS_GAIN_CAP, Math.round(xpAmount * HAPPINESS_GAIN_RATIO))
   return {
-    energy: clamp((pet.energy ?? 0) + ENERGY_GAIN_PER_EVENT),
-    happiness: clamp((pet.happiness ?? 0) + HAPPINESS_GAIN_PER_EVENT),
+    energy: clamp((pet.energy ?? 0) + energyGain),
+    happiness: clamp((pet.happiness ?? 0) + happinessGain),
   }
 }
 

@@ -53,6 +53,7 @@
 .pet-stat-label { font-size: 13px; font-weight: 600; color: #111; }
 .pet-stat-val { font-size: 12px; color: #999; }
 .pet-stat-track { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+.pet-stat-hint { font-size: 10px; color: #aaa; margin-top: 6px; }
 .pet-stat-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
 .pet-stat-fill.energy     { background: linear-gradient(90deg, #eda100, #f4c430); }
 .pet-stat-fill.happiness  { background: linear-gradient(90deg, #e87ba4, #e34948); }

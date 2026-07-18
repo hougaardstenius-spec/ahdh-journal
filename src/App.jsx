@@ -141,7 +141,7 @@ export default function App() {
     setTimeout(() => setXpGain(0), 2000)
 
     if (feedsPet && pet) {
-      const gain = applyEngagementGain(pet)
+      const gain = applyEngagementGain(pet, amount)
       await supabase.from('pets').update(gain).eq('user_id', session.user.id)
       setPet(prev => ({ ...prev, ...gain }))
     }

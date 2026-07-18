@@ -98,6 +98,7 @@ export default function PetView({ pet, onSetupPet, onClaimActivity, today }) {
           <span className="pet-stat-val">{pet.energy}/100</span>
         </div>
         <div className="pet-stat-track"><div className="pet-stat-fill energy" style={{ width: `${pet.energy}%` }} /></div>
+        <div className="pet-stat-hint">Flere vaner krydset af når du logger dagen = mere energi</div>
       </div>
 
       <div className="pet-stat-block">
