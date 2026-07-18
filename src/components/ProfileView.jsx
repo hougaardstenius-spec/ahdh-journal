@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { LEVELS, LEVEL_ICONS } from '../lib/training'
 import { BADGES, computeUnlocked } from '../lib/badges'
 import { SYMPTOMS, HABITS, getMondayOfWeek, dayDateKey } from '../lib/constants'
+import { getPetStage } from '../lib/pet'
 import './ProfileView.css'
 
 const AVATARS = ['🧠','⚡','🔥','🦁','🐺','🦊','🐉','🌊','🌪️','🎯','💎','🚀']
@@ -30,6 +31,7 @@ export default function ProfileView({ user }) {
       { data: weeklyAll },
       { data: questsAll },
       { data: thisWeek },
+      { data: pet },
     ] = await Promise.all([
       supabase.from('user_profiles').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('training_state').select('*').eq('user_id', user.id).maybeSingle(),
@@ -37,6 +39,7 @@ export default function ProfileView({ user }) {
       supabase.from('weekly_reflections').select('id').eq('user_id', user.id),
       supabase.from('quest_progress').select('completed').eq('user_id', user.id).eq('completed', true),
       supabase.from('daily_entries').select('scores, habits').eq('user_id', user.id).in('entry_date', dates),
+      supabase.from('pets').select('*').eq('user_id', user.id).maybeSingle(),
     ])
 
     setProfile(prof)
@@ -82,6 +85,10 @@ export default function ProfileView({ user }) {
       training_level: ts?.current_level || 1,
       completed_quests: (questsAll || []).length,
       total_weekly: (weeklyAll || []).length,
+      pet_exists: !!pet,
+      pet_stage: pet ? getPetStage(pet.total_activities || 0).stageNum : 0,
+      pet_total_activities: pet?.total_activities || 0,
+      pet_happiness: pet?.happiness || 0,
     }
     setStats(computedStats)
   }, [user.id])

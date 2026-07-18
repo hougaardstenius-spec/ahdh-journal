@@ -31,6 +31,14 @@ export const BADGES = [
   // Refleksion
   { id: 'first_week', icon: '🌿', name: 'Første refleksion', desc: 'Gem din første ugerefleksion', check: (s) => s.total_weekly >= 1 },
   { id: 'weekly_4', icon: '🗓️', name: 'En hel måned', desc: '4 ugerefleksioner gemt', check: (s) => s.total_weekly >= 4 },
+
+  // Kæledyr
+  { id: 'pet_adopted', icon: '🥚', name: 'Ny ven', desc: 'Få dit eget kæledyr', check: (s) => s.pet_exists },
+  { id: 'pet_stage_2', icon: '🐣', name: 'Voksende', desc: 'Kæledyret når stadie 2', check: (s) => s.pet_stage >= 2 },
+  { id: 'pet_stage_4', icon: '👑', name: 'Fuldt udvokset', desc: 'Kæledyret når det højeste stadie', check: (s) => s.pet_stage >= 4 },
+  { id: 'pet_activities_10', icon: '🚶', name: 'Gåtursmakker', desc: '10 aktiviteter med kæledyret', check: (s) => s.pet_total_activities >= 10 },
+  { id: 'pet_activities_50', icon: '🏃', name: 'Uadskillelige', desc: '50 aktiviteter med kæledyret', check: (s) => s.pet_total_activities >= 50 },
+  { id: 'pet_happy', icon: '🥰', name: 'I topform', desc: 'Kæledyret har 90+ i lykke', check: (s) => s.pet_happiness >= 90 },
 ]
 
 export function computeUnlocked(stats) {

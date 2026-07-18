@@ -69,3 +69,27 @@ create trigger daily_entries_updated_at
 create trigger weekly_reflections_updated_at
   before update on weekly_reflections
   for each row execute function update_updated_at();
+
+-- Kæledyr
+create table if not exists pets (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  species text not null,
+  name text not null,
+  energy integer not null default 50 check (energy between 0 and 100),
+  happiness integer not null default 70 check (happiness between 0 and 100),
+  total_activities integer not null default 0 check (total_activities >= 0),
+  last_happiness_check_date date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table pets enable row level security;
+
+create policy "Brugere ser kun eget kæledyr"
+  on pets for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create trigger pets_updated_at
+  before update on pets
+  for each row execute function update_updated_at();

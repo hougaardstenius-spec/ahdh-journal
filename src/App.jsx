@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import { XP_REWARDS, getXPLevel } from './lib/gamification'
+import { applyEngagementGain, applyHappinessDecay, resolveActivity, getPetStage } from './lib/pet'
 import Auth from './components/Auth'
 import DayView from './components/DayView'
 import WeekView from './components/WeekView'
@@ -8,6 +9,7 @@ import TrendsView from './components/TrendsView'
 import ExportView from './components/ExportView'
 import TrainingView from './components/TrainingView'
 import ProfileView from './components/ProfileView'
+import PetView from './components/PetView'
 import Confetti from './components/Confetti'
 import './App.css'
 
@@ -15,6 +17,7 @@ const TABS = [
   { id: 'day',      label: 'Dag',     icon: '📓' },
   { id: 'week',     label: 'Uge',     icon: '📅' },
   { id: 'training', label: 'Træning', icon: '🏋️' },
+  { id: 'pet',      label: 'Kæledyr', icon: '🐾' },
   { id: 'trends',   label: 'Grafer',  icon: '📈' },
   { id: 'profile',  label: 'Profil',  icon: '👤' },
 ]
@@ -24,6 +27,7 @@ export default function App() {
   const [tab, setTab] = useState('day')
   const [confirmMsg, setConfirmMsg] = useState(null)
   const [gamification, setGamification] = useState(null)
+  const [pet, setPet] = useState(null)
   const [confetti, setConfetti] = useState(false)
   const [xpGain, setXpGain] = useState(0)
 
@@ -72,43 +76,63 @@ export default function App() {
       }
       await supabase.from('gamification').insert(init)
       setGamification(init)
+      return init
     } else {
       setGamification(data)
+      return data
     }
   }, [])
 
-  useEffect(() => {
-    if (session?.user) loadGamification(session.user.id)
-  }, [session, loadGamification])
+  const loadPet = useCallback(async (userId, gamificationData) => {
+    const { data } = await supabase
+      .from('pets')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
 
-  async function awardXP(amount, celebrate = false) {
+    if (!data) { setPet(null); return }
+
+    const decay = applyHappinessDecay(data, gamificationData, today)
+    if (decay) {
+      await supabase.from('pets').update(decay).eq('user_id', userId)
+      setPet({ ...data, ...decay })
+    } else {
+      setPet(data)
+    }
+  }, [today])
+
+  useEffect(() => {
+    if (session?.user) {
+      loadGamification(session.user.id).then(g => loadPet(session.user.id, g))
+    }
+  }, [session, loadGamification, loadPet])
+
+  async function awardXP(amount, celebrate = false, { affectsStreak = true, feedsPet = true } = {}) {
     if (!session?.user || !gamification) return
     const newXP = (gamification.total_xp || 0) + amount
     const before = getXPLevel(gamification.total_xp || 0)
     const after = getXPLevel(newXP)
     const didLevelUp = after.current.level > before.current.level
 
-    // Compute streak
-    const lastLog = gamification.last_log_date
+    const upd = { total_xp: newXP }
     let newStreak = gamification.current_streak || 0
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayKey = yesterday.toISOString().slice(0, 10)
 
-    if (lastLog === today) {
-      // Already logged today, just add XP
-    } else if (lastLog === yesterdayKey) {
-      newStreak += 1
-    } else if (lastLog !== today) {
-      newStreak = 1
-    }
+    if (affectsStreak) {
+      const lastLog = gamification.last_log_date
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayKey = yesterday.toISOString().slice(0, 10)
 
-    const newLongest = Math.max(newStreak, gamification.longest_streak || 0)
+      if (lastLog === today) {
+        // Already logged today, just add XP
+      } else if (lastLog === yesterdayKey) {
+        newStreak += 1
+      } else if (lastLog !== today) {
+        newStreak = 1
+      }
 
-    const upd = {
-      total_xp: newXP,
-      current_streak: newStreak,
-      longest_streak: newLongest,
-      last_log_date: today,
+      upd.current_streak = newStreak
+      upd.longest_streak = Math.max(newStreak, gamification.longest_streak || 0)
+      upd.last_log_date = today
     }
 
     await supabase.from('gamification').update(upd).eq('user_id', session.user.id)
@@ -116,7 +140,13 @@ export default function App() {
     setXpGain(amount)
     setTimeout(() => setXpGain(0), 2000)
 
-    if (celebrate || didLevelUp || newStreak % 7 === 0) {
+    if (feedsPet && pet) {
+      const gain = applyEngagementGain(pet)
+      await supabase.from('pets').update(gain).eq('user_id', session.user.id)
+      setPet(prev => ({ ...prev, ...gain }))
+    }
+
+    if (celebrate || didLevelUp || (affectsStreak && newStreak % 7 === 0)) {
       setConfetti(true)
     }
   }
@@ -125,6 +155,42 @@ export default function App() {
     await awardXP(outcome.xp, outcome.rarity === 'legendary')
     await supabase.from('gamification').update({ spin_date: today }).eq('user_id', session.user.id)
     setGamification(prev => ({ ...prev, spin_date: today }))
+  }
+
+  async function setupPet(species, name) {
+    if (!session?.user) return
+    const init = {
+      user_id: session.user.id,
+      species,
+      name,
+      energy: 50,
+      happiness: 70,
+      total_activities: 0,
+      last_happiness_check_date: today,
+    }
+    await supabase.from('pets').insert(init)
+    setPet(init)
+  }
+
+  async function claimPetActivity() {
+    if (!session?.user || !pet) return
+    const result = resolveActivity(pet)
+    if (!result) return
+
+    const before = getPetStage(pet.total_activities || 0)
+    const after = getPetStage(result.total_activities)
+
+    const upd = {
+      energy: result.energy,
+      happiness: result.happiness,
+      total_activities: result.total_activities,
+    }
+    await supabase.from('pets').update(upd).eq('user_id', session.user.id)
+    setPet(prev => ({ ...prev, ...upd }))
+    await awardXP(result.xpReward, false, { affectsStreak: false, feedsPet: false })
+
+    if (after.stageIdx > before.stageIdx) setConfetti(true)
+    return result
   }
 
   if (session === undefined) return <div className="loading">Indlæser…</div>
@@ -141,6 +207,9 @@ export default function App() {
     spunToday,
     loggedToday,
     today,
+    pet,
+    onSetupPet: setupPet,
+    onClaimActivity: claimPetActivity,
   }
 
   return (
@@ -156,6 +225,7 @@ export default function App() {
         {tab === 'day'      && <DayView      {...sharedProps} />}
         {tab === 'week'     && <WeekView     {...sharedProps} />}
         {tab === 'training' && <TrainingView {...sharedProps} />}
+        {tab === 'pet'      && <PetView      {...sharedProps} />}
         {tab === 'trends'   && <TrendsView   {...sharedProps} />}
         {tab === 'profile'  && <ProfileView  {...sharedProps} xpGain={xpGain} />}
       </main>
