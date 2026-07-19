@@ -61,6 +61,24 @@ GitHub bygger og deployer automatisk. Vent 2–3 minutter, så er appen live på
 
 ---
 
+### 5. Push-notifikationer (valgfrit)
+
+For at kæledyret kan sende dig en rigtig notifikation når det savner dig,
+skal du tilføje 3 secrets mere samme sted som i trin 3
+(**Settings → Secrets and variables → Actions**):
+
+| Navn | Værdi |
+|------|-------|
+| `VITE_VAPID_PUBLIC_KEY` | Den offentlige VAPID-nøgle (genereres én gang, se nedenfor) |
+| `VAPID_PRIVATE_KEY` | Den private VAPID-nøgle — må aldrig ligge andre steder end her |
+| `SUPABASE_SERVICE_ROLE_KEY` | Din `service_role`-nøgle fra Supabase **Settings → API** — giver fuld databaseadgang, del den aldrig, indsæt kun direkte i GitHub-secret-feltet |
+
+VAPID-nøgleparret genereres én gang med `npx web-push generate-vapid-keys`
+og ændres ikke igen — hvis det regenereres, skal alle brugere aktivere
+notifikationer forfra.
+
+---
+
 ### 5. Tilføj til din telefons hjemmeskærm
 
 **iPhone (Safari):**

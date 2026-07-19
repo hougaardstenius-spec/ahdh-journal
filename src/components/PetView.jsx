@@ -1,9 +1,50 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   SPECIES, STAGE_NAMES, STAGE_THRESHOLDS, ACTIVITY_ENERGY_COST,
   getPetStage, getPetEmoji, getSpecies, getPetMood, getPetMessage,
 } from '../lib/pet'
+import { getExistingSubscription, subscribeToPush } from '../lib/push'
 import './PetView.css'
+
+function NotificationOptIn({ user }) {
+  const supported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
+  const [subscribed, setSubscribed] = useState(null) // null = tjekker endnu
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!supported) { setSubscribed(false); return }
+    getExistingSubscription().then(sub => setSubscribed(!!sub)).catch(() => setSubscribed(false))
+  }, [supported])
+
+  async function handleEnable() {
+    setBusy(true)
+    setError(null)
+    try {
+      const sub = await subscribeToPush(user.id)
+      setSubscribed(!!sub)
+      if (!sub) setError('Du skal give tilladelse i browseren for at få notifikationer.')
+    } catch {
+      setError('Kunne ikke aktivere notifikationer i denne browser.')
+    }
+    setBusy(false)
+  }
+
+  if (!supported) return null
+
+  return (
+    <div className="pet-notify-block">
+      {subscribed ? (
+        <div className="pet-notify-on">🔔 Notifikationer aktiveret</div>
+      ) : (
+        <button className="pet-notify-btn" onClick={handleEnable} disabled={busy || subscribed === null}>
+          {busy ? 'Aktiverer…' : '🔔 Aktivér notifikationer'}
+        </button>
+      )}
+      {error && <div className="pet-notify-error">{error}</div>}
+    </div>
+  )
+}
 
 function Onboarding({ onSetupPet }) {
   const [speciesId, setSpeciesId] = useState(SPECIES[0].id)
@@ -56,7 +97,7 @@ function Onboarding({ onSetupPet }) {
   )
 }
 
-export default function PetView({ pet, onSetupPet, onClaimActivity, today }) {
+export default function PetView({ user, pet, onSetupPet, onClaimActivity, today }) {
   const [claiming, setClaiming] = useState(false)
   const [result, setResult] = useState(null)
 
@@ -91,6 +132,8 @@ export default function PetView({ pet, onSetupPet, onClaimActivity, today }) {
           <span className="pet-mood-msg">{message}</span>
         </div>
       </div>
+
+      <NotificationOptIn user={user} />
 
       <div className="pet-stat-block">
         <div className="pet-stat-row">
