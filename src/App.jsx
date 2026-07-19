@@ -107,6 +107,16 @@ export default function App() {
     }
   }, [session, loadGamification, loadPet])
 
+  // App-ikon badge: viser en prik når kæledyret savner opmærksomhed
+  useEffect(() => {
+    if (!('setAppBadge' in navigator)) return
+    if (pet && pet.happiness < 50) {
+      navigator.setAppBadge(1).catch(() => {})
+    } else {
+      navigator.clearAppBadge().catch(() => {})
+    }
+  }, [pet])
+
   async function awardXP(amount, celebrate = false, { affectsStreak = true, feedsPet = true } = {}) {
     if (!session?.user || !gamification) return
     const newXP = (gamification.total_xp || 0) + amount
