@@ -24,8 +24,8 @@ function NotificationOptIn({ user }) {
       const sub = await subscribeToPush(user.id)
       setSubscribed(!!sub)
       if (!sub) setError('Du skal give tilladelse i browseren for at få notifikationer.')
-    } catch {
-      setError('Kunne ikke aktivere notifikationer i denne browser.')
+    } catch (e) {
+      setError(`Kunne ikke aktivere notifikationer: ${e?.message || e}`)
     }
     setBusy(false)
   }
