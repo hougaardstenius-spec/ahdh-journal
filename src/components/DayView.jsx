@@ -90,9 +90,16 @@ function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSav
               return (
                 <div key={s.k} className="sym-card">
                   <div className="sym-row">
-                    <span className="sym-name">{s.l}</span>
-                    <button className="sym-info-btn" onClick={() => setOpenInfo(isOpen ? null : s.k)}>ⓘ</button>
-                    <input type="range" min="1" max="10" step="1" value={val}
+                    <label className="sym-name" htmlFor={`sym-${s.k}`}>{s.l}</label>
+                    <button
+                      type="button"
+                      className="sym-info-btn"
+                      onClick={() => setOpenInfo(isOpen ? null : s.k)}
+                      aria-label={isOpen ? `Skjul forklaring for ${s.l}` : `Vis forklaring for ${s.l}`}
+                      aria-expanded={isOpen}
+                    >ⓘ</button>
+                    <input id={`sym-${s.k}`} type="range" min="1" max="10" step="1" value={val}
+                      aria-label={`${s.l}, 1 til 10`}
                       onChange={e => handleSlider(s.k, parseInt(e.target.value))} />
                     <span className="sym-val">{val}</span>
                   </div>
@@ -135,9 +142,10 @@ function DayForm({ data, dayIdx, saving, saved, onScore, onHabit, onField, onSav
           ))}
 
           <section className="section">
-            <div className="sec-label">Søvn</div>
+            <label className="sec-label" htmlFor="sleep-range">Søvn</label>
             <div className="sleep-row">
-              <input type="range" min="3" max="12" step="0.5" value={data.sleep ?? 7}
+              <input id="sleep-range" type="range" min="3" max="12" step="0.5" value={data.sleep ?? 7}
+                aria-label={`Søvn i timer, ${parseFloat(data.sleep ?? 7).toFixed(1)} timer`}
                 onChange={e => {
                   const sy = window.scrollY
                   onField('sleep', parseFloat(e.target.value))
@@ -261,9 +269,9 @@ export default function DayView({ user, gamification, onAwardXP, onSpin, spunTod
       )}
 
       <div className="week-nav">
-        <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)}>←</button>
+        <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)} aria-label="Forrige uge">←</button>
         <span className="week-label">{formatWeekRange(wkOff)}</span>
-        <button className="nav-arrow" onClick={() => setWkOff(w => w + 1)}>→</button>
+        <button className="nav-arrow" onClick={() => setWkOff(w => w + 1)} aria-label="Næste uge">→</button>
       </div>
 
       <div className="day-chips">

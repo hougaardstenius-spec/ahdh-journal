@@ -153,7 +153,7 @@ export default function ProfileView({ user }) {
           <div className="pf-trait">{levelIcon} {level.trait}</div>
           {status && <div className="pf-status" style={{ color: status.color }}>{status.msg}</div>}
         </div>
-        <button className="pf-edit-btn" onClick={() => setEditing(true)}>✏️</button>
+        <button className="pf-edit-btn" onClick={() => setEditing(true)} aria-label="Rediger profil">✏️</button>
       </div>
 
       {/* QUICK STATS */}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { NotebookPen, CalendarDays, Dumbbell, PawPrint, LineChart, CircleUserRound } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { XP_REWARDS, getXPLevel } from './lib/gamification'
 import { applyEngagementGain, applyHappinessDecay, resolveActivity, getPetStage } from './lib/pet'
@@ -14,12 +15,12 @@ import Confetti from './components/Confetti'
 import './App.css'
 
 const TABS = [
-  { id: 'day',      label: 'Dag',     icon: '📓' },
-  { id: 'week',     label: 'Uge',     icon: '📅' },
-  { id: 'training', label: 'Træning', icon: '🏋️' },
-  { id: 'pet',      label: 'Kæledyr', icon: '🐾' },
-  { id: 'trends',   label: 'Grafer',  icon: '📈' },
-  { id: 'profile',  label: 'Profil',  icon: '👤' },
+  { id: 'day',      label: 'Dag',     Icon: NotebookPen },
+  { id: 'week',     label: 'Uge',     Icon: CalendarDays },
+  { id: 'training', label: 'Træning', Icon: Dumbbell },
+  { id: 'pet',      label: 'Kæledyr', Icon: PawPrint },
+  { id: 'trends',   label: 'Grafer',  Icon: LineChart },
+  { id: 'profile',  label: 'Profil',  Icon: CircleUserRound },
 ]
 
 export default function App() {
@@ -243,7 +244,7 @@ export default function App() {
       <nav className="bottom-nav">
         {TABS.map(t => (
           <button key={t.id} className={`bnav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-            <span className="bnav-icon">{t.icon}</span>
+            <span className="bnav-icon"><t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 2} /></span>
             <span className="bnav-label">{t.label}</span>
           </button>
         ))}

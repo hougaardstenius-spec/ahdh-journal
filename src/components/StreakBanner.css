@@ -4,20 +4,20 @@
   gap: 10px;
   border-radius: 12px;
   padding: 10px 14px;
-  background: #f0f7ff;
-  border: 0.5px solid #bfdbfe;
+  background: var(--info-bg);
+  border: 0.5px solid var(--info-border);
   flex-wrap: wrap;
   transition: all 0.3s;
 }
 
 .streak-banner.safe {
-  background: #eafaf1;
-  border-color: #a9dfbf;
+  background: var(--success-bg);
+  border-color: var(--success-border);
   animation: streak-safe 0.5s ease;
 }
 
 .streak-banner.danger {
-  background: #fff8f0;
+  background: var(--warning-bg);
   border-color: #fcd34d;
   animation: streak-pulse 2s ease infinite;
 }
@@ -38,7 +38,7 @@
 .streak-label {
   font-size: 13px;
   font-weight: 600;
-  color: #111;
+  color: var(--text);
   flex: 1;
 }
 
@@ -52,7 +52,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ddd;
+  background: var(--border-strong);
 }
 
 .streak-dot.on {

@@ -154,9 +154,9 @@ export default function ExportView({ user }) {
         <p className="export-card-desc">Eksporter én dags noter med scorer, vaner og refleksioner.</p>
 
         <div className="mini-nav">
-          <button className="nav-arrow" onClick={() => setDayWkOff(w => w - 1)}>←</button>
+          <button className="nav-arrow" onClick={() => setDayWkOff(w => w - 1)} aria-label="Forrige uge">←</button>
           <span className="mini-week">{formatWeekRange(dayWkOff)}</span>
-          <button className="nav-arrow" onClick={() => setDayWkOff(w => w + 1)}>→</button>
+          <button className="nav-arrow" onClick={() => setDayWkOff(w => w + 1)} aria-label="Næste uge">→</button>
         </div>
 
         <div className="day-chips">
@@ -177,9 +177,9 @@ export default function ExportView({ user }) {
         <p className="export-card-desc">Eksporter ugens opsummering med tabeller og refleksioner.</p>
 
         <div className="mini-nav">
-          <button className="nav-arrow" onClick={() => setWeekWkOff(w => w - 1)}>←</button>
+          <button className="nav-arrow" onClick={() => setWeekWkOff(w => w - 1)} aria-label="Forrige uge">←</button>
           <span className="mini-week">{formatWeekRange(weekWkOff)}</span>
-          <button className="nav-arrow" onClick={() => setWeekWkOff(w => w + 1)}>→</button>
+          <button className="nav-arrow" onClick={() => setWeekWkOff(w => w + 1)} aria-label="Næste uge">→</button>
         </div>
 
         <button className="btn-export" onClick={exportWeek} disabled={exporting === 'week'}>

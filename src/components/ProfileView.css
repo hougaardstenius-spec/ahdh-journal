@@ -8,7 +8,7 @@
 .pf-loading {
   padding: 3rem;
   text-align: center;
-  color: #888;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -44,15 +44,17 @@
   background: rgba(255,255,255,0.15);
   border: none;
   border-radius: 8px;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   font-size: 16px;
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: -6px -8px 0 0;
 }
+.pf-edit-btn:active { opacity: 0.7; }
 
 /* QUICK STATS */
 .pf-quick-stats {
@@ -62,20 +64,20 @@
 }
 
 .pf-qs-item {
-  background: #f7f8fa;
+  background: var(--bg-surface);
   border-radius: 10px;
   padding: 10px 6px;
   text-align: center;
 }
-.pf-qs-val { font-size: 22px; font-weight: 700; color: #111; }
-.pf-qs-lbl { font-size: 10px; color: #999; margin-top: 2px; line-height: 1.3; }
+.pf-qs-val { font-size: 22px; font-weight: 700; color: var(--text); }
+.pf-qs-lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
 
 /* SECTIONS */
 .pf-section { }
 .pf-section-label {
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin-bottom: 8px;
@@ -85,7 +87,7 @@
 .pf-week-grid {
   display: flex;
   gap: 6px;
-  background: #f7f8fa;
+  background: var(--bg-surface);
   border-radius: 12px;
   padding: 14px 10px 10px;
   align-items: flex-end;
@@ -102,7 +104,7 @@
 .pf-week-bar-wrap {
   width: 100%;
   height: 60px;
-  background: #e8e8e8;
+  background: var(--border);
   border-radius: 4px;
   display: flex;
   align-items: flex-end;
@@ -116,12 +118,12 @@
   min-height: 2px;
 }
 
-.pf-week-val { font-size: 11px; font-weight: 600; color: #444; }
-.pf-week-lbl { font-size: 9px; color: #aaa; }
+.pf-week-val { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.pf-week-lbl { font-size: 9px; color: var(--text-muted); }
 
 /* HABITS */
 .pf-habits-week {
-  background: #f7f8fa;
+  background: var(--bg-surface);
   border-radius: 12px;
   padding: 10px 12px;
   display: flex;
@@ -145,13 +147,13 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #e0e0e0;
+  background: var(--border-strong);
   flex-shrink: 0;
 }
 .pf-dot.on { background: #27ae60; }
 
-.pf-habit-week-name { flex: 1; font-size: 12px; color: #555; }
-.pf-habit-week-count { font-size: 12px; color: #999; flex-shrink: 0; }
+.pf-habit-week-name { flex: 1; font-size: 12px; color: var(--text-secondary); }
+.pf-habit-week-count { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
 
 /* BADGES */
 .pf-badges-grid {
@@ -169,19 +171,19 @@
 }
 
 .pf-badge.on {
-  background: #f7f8fa;
-  border-color: #e0e0e0;
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
 }
 
 .pf-badge.locked {
-  background: #fafafa;
-  border-color: #f0f0f0;
+  background: var(--bg-surface-2);
+  border-color: var(--border);
   opacity: 0.5;
 }
 
 .pf-badge-icon { font-size: 26px; margin-bottom: 5px; }
-.pf-badge-name { font-size: 11px; font-weight: 600; color: #333; line-height: 1.3; }
-.pf-badge-desc { font-size: 10px; color: #888; margin-top: 3px; line-height: 1.3; }
+.pf-badge-name { font-size: 11px; font-weight: 600; color: var(--text-secondary); line-height: 1.3; }
+.pf-badge-desc { font-size: 10px; color: var(--text-muted); margin-top: 3px; line-height: 1.3; }
 
 /* EDIT MODAL */
 .pf-modal-overlay {
@@ -194,7 +196,7 @@
 }
 
 .pf-modal {
-  background: white;
+  background: var(--bg-page);
   border-radius: 16px 16px 0 0;
   padding: 24px 20px 40px;
   width: 100%;
@@ -206,14 +208,14 @@
   font-size: 17px;
   font-weight: 600;
   margin-bottom: 20px;
-  color: #111;
+  color: var(--text);
 }
 
 .pf-field-group { margin-bottom: 18px; }
 .pf-field-label {
   font-size: 13px;
   font-weight: 500;
-  color: #444;
+  color: var(--text-secondary);
   display: block;
   margin-bottom: 6px;
 }
@@ -221,16 +223,20 @@
 .pf-field-input {
   width: 100%;
   padding: 11px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
   font-size: 15px;
   outline: none;
-  color: #111;
+  color: var(--text);
   font-family: inherit;
   -webkit-appearance: none;
-  background: white;
+  background: var(--bg-page);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.pf-field-input:focus { border-color: #378ADD; }
+.pf-field-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
 
 .pf-avatar-grid {
   display: grid;
@@ -246,13 +252,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: #f7f8fa;
+  background: var(--bg-surface);
   border: 2px solid transparent;
   transition: all 0.15s;
 }
 .pf-avatar-opt.selected {
-  border-color: #378ADD;
-  background: #eff6ff;
+  border-color: var(--accent);
+  background: var(--info-bg);
 }
 
 .pf-modal-btns {
@@ -263,19 +269,21 @@
 
 .pf-modal-cancel {
   flex: 1;
-  background: #f0f0f0;
+  background: var(--bg-surface-2);
   border: none;
   border-radius: 10px;
   padding: 13px;
   font-size: 15px;
   cursor: pointer;
   font-family: inherit;
-  color: #555;
+  color: var(--text-secondary);
+  min-height: 44px;
 }
+.pf-modal-cancel:active { opacity: 0.8; }
 
 .pf-modal-save {
   flex: 1;
-  background: #378ADD;
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 10px;
@@ -284,5 +292,7 @@
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+  min-height: 44px;
 }
+.pf-modal-save:active { opacity: 0.8; }
 .pf-modal-save:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -1,8 +1,8 @@
 .spin-wrap {
-  background: #f7f8fa;
+  background: var(--bg-surface);
   border-radius: 14px;
   padding: 14px;
-  border: 0.5px solid #e8e8e8;
+  border: 0.5px solid var(--border);
 }
 
 .spin-header {
@@ -15,12 +15,12 @@
 .spin-title {
   font-size: 14px;
   font-weight: 600;
-  color: #111;
+  color: var(--text);
 }
 
 .spin-hint {
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .spin-btn {
@@ -82,22 +82,22 @@
   to   { transform: scale(1); opacity: 1; }
 }
 
-.rarity-common    { background: #f0f7ff; border: 0.5px solid #bfdbfe; }
-.rarity-uncommon  { background: #f0fdf4; border: 0.5px solid #86efac; }
-.rarity-rare      { background: #fdf4ff; border: 0.5px solid #d8b4fe; }
-.rarity-legendary { background: #fefce8; border: 0.5px solid #fde047; }
+.rarity-common    { background: var(--info-bg); border: 0.5px solid var(--info-border); }
+.rarity-uncommon  { background: var(--success-bg); border: 0.5px solid var(--success-border); }
+.rarity-rare      { background: var(--purple-bg); border: 0.5px solid var(--purple-border); }
+.rarity-legendary { background: var(--warning-bg); border: 0.5px solid var(--warning-border); }
 
 .spin-result-icon { font-size: 32px; flex-shrink: 0; }
 .spin-result-info { flex: 1; min-width: 0; }
-.spin-result-label { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 4px; }
-.spin-result-desc { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 6px; }
-.spin-message { font-style: italic; color: #378ADD; }
+.spin-result-label { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.spin-result-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 6px; }
+.spin-message { font-style: italic; color: var(--accent); }
 .spin-result-xp {
   display: inline-block;
   font-size: 12px;
   font-weight: 700;
-  color: #27ae60;
-  background: #eafaf1;
+  color: var(--success-text);
+  background: var(--success-bg);
   padding: 2px 8px;
   border-radius: 20px;
 }
@@ -107,5 +107,5 @@
   top: 8px;
   right: 10px;
   font-size: 10px;
-  color: #aaa;
+  color: var(--text-muted);
 }

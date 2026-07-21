@@ -20,6 +20,16 @@ export default function TrendsView({ user }) {
   const [range, setRange] = useState(14)
   const [metrics, setMetrics] = useState(['focus'])
   const [entries, setEntries] = useState([])
+  const [isDark, setIsDark] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = e => setIsDark(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -76,19 +86,22 @@ export default function TrendsView({ user }) {
 
   const chartData = { labels, datasets }
 
+  const tickColor = isDark ? '#9098a5' : '#6b7280'
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
       x: {
-        ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 10 },
+        ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 10, color: tickColor },
         grid: { display: false },
       },
       y: {
         min: 1, max: 10,
-        ticks: { stepSize: 1, font: { size: 10 } },
-        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { stepSize: 1, font: { size: 10 }, color: tickColor },
+        grid: { color: gridColor },
       },
     },
   }

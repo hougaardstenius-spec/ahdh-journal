@@ -65,9 +65,9 @@ export default function WeekView({ user }) {
   return (
     <div className="week-wrap">
       <div className="week-nav">
-        <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)}>←</button>
+        <button className="nav-arrow" onClick={() => setWkOff(w => w - 1)} aria-label="Forrige uge">←</button>
         <span className="week-label">{formatWeekRange(wkOff)}</span>
-        <button className="nav-arrow" onClick={() => setWkOff(w => w + 1)}>→</button>
+        <button className="nav-arrow" onClick={() => setWkOff(w => w + 1)} aria-label="Næste uge">→</button>
       </div>
 
       <section className="section">
